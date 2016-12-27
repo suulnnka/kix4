@@ -357,7 +357,6 @@ do
   end
 
   -- init pattern book
-  -- TODO load pattern book
   init_array_d1(ptn_book,6,{})
   for i = 1,6 do
     local book = ptn_book[i]
