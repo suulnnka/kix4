@@ -527,7 +527,9 @@ local function search_evaluate(depth,alpha,beta)
       return score
     else
       color = 3 - color
-      return evaluate()
+      local my = count_table(board,color)
+      local opp = count_table(board,3-color)
+      return my - opp
     end  
   end
   
