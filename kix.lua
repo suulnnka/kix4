@@ -12,6 +12,7 @@ local step = 0.24
 local total_diff = 0
 
 local insert = table.insert
+local sort = table.sort
 
 math.randomseed(os.time())
 -- math.randomseed(0)
@@ -138,6 +139,13 @@ local function check(x)
     end
   end
   return false
+end
+
+local function check_for_player(x)
+  if board[x] ~= 0 then
+    return false
+  end
+  return check(x)
 end
 
 local function gen_move()
@@ -501,15 +509,29 @@ local function search_exact(depth,alpha,beta)
   return a,num
 end
 
+local function sort_list(list)
+  local new_list = {}
+  for i = 2,list[1] + 1 do
+    local now = list[i]
+    turn_with_ptn( now )
+    local score = evaluate()
+    back_with_ptn()
+    insert(new_list,{now,score})
+  end
+  sort(new_list,function(a,b) return a[2]<b[2] end)
+  for i,v in pairs(new_list) do
+    list[i+1] = v[1]
+  end
+  return list
+end
+
 local function search_evaluate(depth,alpha,beta)
 
   -- TODO OR NOT TODO ID(iterative deepening)
   -- TODO OR NOT TODO aspiration search
 
   -- if depth == 6 then no ID&AS 
-  -- only sort by one-depth evaluate()
-  
-  -- TODO sort move_list
+  -- only sort by two-depth evaluate()
   
   if depth == 0 then
     return evaluate()
@@ -531,6 +553,10 @@ local function search_evaluate(depth,alpha,beta)
       local opp = count_table(board,3-color)
       return my - opp
     end  
+  end
+
+  if depth >= 3 then
+    list = sort_list(list)
   end
   
   local a = alpha
@@ -636,7 +662,7 @@ local kix = {}
 kix.init = init
 kix.change_color = change_color
 kix.turn = turn
-kix.check = check
+kix.check = check_for_player
 kix.can_move = can_move
 kix.search = search
 kix.get_board = get_board
