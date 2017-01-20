@@ -13,6 +13,7 @@ local total_diff = 0
 
 local insert = table.insert
 local sort = table.sort
+local ceil = math.ceil
 
 math.randomseed(os.time())
 -- math.randomseed(0)
@@ -425,7 +426,7 @@ local function learn(score)
   white = count_table(board,2)
   local f = black + white - 4
   if f == 0 then f = 1 end
-  now_book = ptn_book[ math.ceil( f / 10 ) ]
+  now_book = ptn_book[ ceil( f / 10 ) ]
   local now = evaluate()
   local diff = score - now
   if color == 2 then
@@ -453,6 +454,28 @@ end
 
 ---------------------MODSEARCH START---------------------
 
+local function sort_list(list)
+  local new_list = {}
+  local old_now_book = now_book
+  if list_top == 0 then
+    return list
+  end
+  now_book = ptn_book[ceil( list_top / 10 )]
+  for i = 2,list[1] + 1 do
+    local now = list[i]
+    turn_with_ptn( now )
+    local score = evaluate()
+    back_with_ptn()
+    insert(new_list,{now,score})
+  end
+  now_book = old_now_book
+  sort(new_list,function(a,b) return a[2]<b[2] end)
+  for i,v in pairs(new_list) do
+    list[i+1] = v[1]
+  end
+  return list
+end
+
 local function search_exact(depth,alpha,beta)
 
   if depth == 0 then
@@ -465,6 +488,11 @@ local function search_exact(depth,alpha,beta)
 
   local list = gen_move()
   local count = list[1]
+
+  if depth >= 7 then
+    update_all_ptn()
+    list = sort_list(list)
+  end
 
   -- no move
   if count == 0 then
@@ -507,22 +535,6 @@ local function search_exact(depth,alpha,beta)
   end
 
   return a,num
-end
-
-local function sort_list(list)
-  local new_list = {}
-  for i = 2,list[1] + 1 do
-    local now = list[i]
-    turn_with_ptn( now )
-    local score = evaluate()
-    back_with_ptn()
-    insert(new_list,{now,score})
-  end
-  sort(new_list,function(a,b) return a[2]<b[2] end)
-  for i,v in pairs(new_list) do
-    list[i+1] = v[1]
-  end
-  return list
 end
 
 local function search_evaluate(depth,alpha,beta)
@@ -636,13 +648,12 @@ local function search_select()
   white = count_table(board,2)
   local space = 64 - black - white
   if space <= end_depth then
-    now_book = ptn_book[6]
     return search_end,space
   elseif space > 60 - op_depth then
     return search_opening 
   else
     local f = math.min( white + black + mid_depth , 64 ) - 4
-    now_book = ptn_book[ math.ceil( f / 10 ) ]
+    now_book = ptn_book[ ceil( f / 10 ) ]
     return search_mid,math.min(mid_depth,space)
   end
 end
